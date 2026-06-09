@@ -219,3 +219,11 @@ __marimo__/
 
 
 create_structure.py
+
+# TriRAG project specific
+logs/
+data/vector/*
+data/bm25/*
+data/graph/*
+data/processed/*
+!data/**/.gitkeep
