@@ -1,0 +1,4 @@
+pypdf
+sentence-transformers
+pyyaml
+-e .
