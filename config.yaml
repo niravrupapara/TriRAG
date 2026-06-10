@@ -1,0 +1,24 @@
+project:
+  name: TriRAG
+  version: "1.0.0"
+
+paths:
+  raw: data/raw
+  processed: data/processed
+  vector: data/vector
+  bm25: data/bm25
+  graph: data/graph
+  eval: data/eval
+  logs: logs
+
+chunking:
+  strategy: recursive   # options: fixed, recursive, semantic
+  chunk_size: 512
+  chunk_overlap: 50
+
+embeddings:
+  model: BAAI/bge-small-en-v1.5
+  dimension: 384
+
+retrieval:
+  top_k: 5
