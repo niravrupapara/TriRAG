@@ -10,6 +10,11 @@ from src.retrieval.bm25_retriever import BM25RAG
 from src.retrieval.hybrid_rag import HybridRAG
 from src.rerankers.cross_encoder import CrossEncoderReranker
 
+from src.graph.extractor import extract_all_triples
+from src.graph.builder import build_graph
+from src.storage.graph_store import GraphStore
+from src.retrieval.graph_rag import GraphRAG
+
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -111,9 +116,49 @@ def hybrid_query(question: str, store: VectorStore, embedder: Embedder,
     print(f"{'='*60}\n")
 
 
+def graph_ingest(file_path: str, config: dict):
+    """Load, chunk, extract triples, build and save knowledge graph."""
+    logger.info(f"Starting graph ingestion for file: {file_path}")
+
+    text = load_document(file_path)
+
+    chunks = chunk_text(
+        text,
+        strategy=config['chunking']['strategy'],
+        chunk_size=config['chunking']['chunk_size'],
+        overlap=config['chunking']['chunk_overlap']
+    )
+
+    triples = extract_all_triples(chunks, config)
+    graph = build_graph(triples)
+
+    graph_store = GraphStore(config["paths"]["graph"])
+    graph_store.save(graph)
+
+    logger.info(f"Graph ingestion completed | triples: {len(triples)}")
+    return graph
+
+
+def graph_query(question: str, graph, config: dict):
+    """Retrieve using GraphRAG knowledge graph traversal."""
+    logger.info(f"Graph query received: {question}")
+
+    retriever = GraphRAG(graph, config)
+    results = retriever.retrieve(question, top_k=config["graph"]["top_k"])
+
+    print(f"\n{'='*60}")
+    print(f"Graph Query: {question}")
+    print(f"{'='*60}")
+    for i, r in enumerate(results):
+        print(f"\n--- Result {i+1} ---")
+        print(r["chunk"])
+    print(f"{'='*60}\n")
+
+
+
 
 if __name__ == "__main__":
     config = load_config("config.yaml")
-    store, embedder, bm25_index, bm25_chunks = hybrid_ingest(r"C:\Users\Nirav Rupapara\Downloads\test_fnn_pyq.pdf", config)
-    hybrid_query("PCA principal component analysis", store, embedder, bm25_index, bm25_chunks, config)
+    graph = graph_ingest(r"C:\Users\Nirav Rupapara\Downloads\test_fnn_pyq.pdf", config)
+    graph_query("PCA", graph, config)
 
