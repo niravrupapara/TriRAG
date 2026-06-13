@@ -2,4 +2,7 @@ pypdf
 rank-bm25
 sentence-transformers
 pyyaml
+networkx
+groq
+python-dotenv
 -e .
