@@ -15,6 +15,9 @@ from src.graph.builder import build_graph
 from src.storage.graph_store import GraphStore
 from src.retrieval.graph_rag import GraphRAG
 
+from src.routing.router import classify_query, route_query
+
+
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -155,10 +158,71 @@ def graph_query(question: str, graph, config: dict):
     print(f"{'='*60}\n")
 
 
+def full_ingest(file_path: str, config: dict):
+    """Load, chunk, embed, build BM25 and knowledge graph for all strategies."""
+    logger.info(f"Starting full ingestion for file: {file_path}")
+
+    text = load_document(file_path)
+
+    chunks = chunk_text(
+        text,
+        strategy=config["chunking"]["strategy"],
+        chunk_size=config['chunking']['chunk_size'],
+        overlap=config['chunking']['chunk_overlap']
+    )
+
+    embedder = Embedder(config['embeddings']['model'])
+    vectors = embedder.embed(chunks)
+
+    store = VectorStore(config['paths']['vector'])
+    store.save(vectors, chunks)
+
+    bm25_store = BM25Store(config['paths']['bm25'])
+    bm25_index = bm25_store.save(
+        chunks,
+        k1=config['bm25']['k1'],
+        b=config['bm25']['b']
+    )
+    bm25_chunks = chunks
+
+    triples = extract_all_triples(chunks, config)
+    graph = build_graph(triples)
+    graph_store = GraphStore(config['paths']['graph'])
+    graph_store.save(graph)
+
+    logger.info(f"Full ingestion complete | chunks: {len(chunks)} | triples: {len(triples)}")
+    return store, embedder, bm25_index, bm25_chunks, graph
+
+
+def router_query(question: str, store, embedder, bm25_index, bm25_chunks: list, graph, config: dict):
+    """Route question to best RAG strategy and print results."""
+    logger.info(f"Router query received: {question}")
+
+    strategy, results = route_query(
+        question, store, embedder, bm25_index, bm25_chunks, graph, config
+    )
+
+    print(f"\n{'='*60}")
+    print(f"Query   : {question}")
+    print(f"Strategy: {strategy.upper()}")
+    print(f"{'='*60}")
+    for i, r in enumerate(results):
+        print(f"\n--- Result {i+1} ---")
+        print(r["chunk"])
+    print(f"{'='*60}\n")
+
+
 
 
 if __name__ == "__main__":
     config = load_config("config.yaml")
-    graph = graph_ingest(r"C:\Users\Nirav Rupapara\Downloads\test_fnn_pyq.pdf", config)
-    graph_query("PCA", graph, config)
+    
+    store, embedder, bm25_index, bm25_chunks, graph = full_ingest(
+        r"C:\Users\Nirav Rupapara\Downloads\test_fnn_pyq.pdf", config
+    )
+    router_query("PCA", store, embedder, bm25_index, bm25_chunks, graph, config)
+    router_query(
+        "how does PCA relate to dimensionality reduction",
+        store, embedder, bm25_index, bm25_chunks, graph, config
+    )
 
