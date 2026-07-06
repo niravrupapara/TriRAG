@@ -30,6 +30,9 @@ def evaluate(store, embedder, bm25_index, bm25_chunks: list,
     strategies = ["naive", "hybrid", "graph"]
     scores = {s: {"hit_rate": [], "mrr": [], "ndcg": [], "llm_score": []} for s in strategies}
 
+    reranker = CrossEncoderReranker(config["reranker"]["model"])
+    logger.info("CrossEncoderReranker loaded.")
+
     for item in questions:
         question = item["question"]
         expected = item["expected"]
@@ -47,7 +50,7 @@ def evaluate(store, embedder, bm25_index, bm25_chunks: list,
         candidates = HybridRAG(bm25, dense).retrieve(
             question, top_k=config["retrieval"]["final_top_k"] * 2
         )
-        hybrid_results = CrossEncoderReranker(config["reranker"]["model"]).rerank(
+        hybrid_results = reranker.rerank(
             question, candidates, top_k=config["reranker"]["top_k"]
         )
         for k, v in compute_metrics(hybrid_results, expected).items():

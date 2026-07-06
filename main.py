@@ -215,6 +215,7 @@ def load_or_ingest(file_path: str, config: dict):
     if indexes_exist:
         logger.info("Indexes found on disk. Loading from cache...")
         store.load()
+        logger.info("Loading embedding model...")
         embedder = Embedder(config['embeddings']['model'])
         bm25_index, bm25_chunks = bm25_store.load()
         graph = graph_store.load()
