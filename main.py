@@ -17,6 +17,9 @@ from src.retrieval.graph_rag import GraphRAG
 
 from src.routing.router import classify_query, route_query
 
+from src.evaluation.evaluator import evaluate, print_report
+
+
 
 from src.utils.logging import get_logger
 
@@ -212,6 +215,17 @@ def router_query(question: str, store, embedder, bm25_index, bm25_chunks: list, 
     print(f"{'='*60}\n")
 
 
+def run_evaluation(store, embedder, bm25_index, bm25_chunks: list, graph, config: dict):
+    """Run full evaluation benchmark across all RAG strategies."""
+    logger.info("Starting evaluation benchmark...")
+
+    summary = evaluate(
+        store, embedder, bm25_index, bm25_chunks, graph, config
+    )
+
+    print_report(summary)
+
+    logger.info("Evaluation benchmark complete.")
 
 
 if __name__ == "__main__":
@@ -220,9 +234,5 @@ if __name__ == "__main__":
     store, embedder, bm25_index, bm25_chunks, graph = full_ingest(
         r"C:\Users\Nirav Rupapara\Downloads\test_fnn_pyq.pdf", config
     )
-    router_query("PCA", store, embedder, bm25_index, bm25_chunks, graph, config)
-    router_query(
-        "how does PCA relate to dimensionality reduction",
-        store, embedder, bm25_index, bm25_chunks, graph, config
-    )
+    run_evaluation(store, embedder, bm25_index, bm25_chunks, graph, config)
 
