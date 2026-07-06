@@ -1,4 +1,5 @@
 import json
+import time
 
 from src.evaluation.metrics import compute_metrics
 from src.evaluation.llm_judge import judge
@@ -59,6 +60,7 @@ def evaluate(store, embedder, bm25_index, bm25_chunks: list,
         for k, v in compute_metrics(graph_results, expected).items():
             scores["graph"][k].append(v)
         scores["graph"]["llm_score"].append(judge(question, graph_results, config))
+        time.sleep(3)
 
     summary = {}
     for strategy in strategies:
