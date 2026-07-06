@@ -1,3 +1,5 @@
+import os
+
 import yaml
 from src.ingestion.loader import load_document
 from src.chunking.chunker import chunk_text
@@ -197,6 +199,33 @@ def full_ingest(file_path: str, config: dict):
     return store, embedder, bm25_index, bm25_chunks, graph
 
 
+def load_or_ingest(file_path: str, config: dict):
+    """Load indexes from disk if they exists, else run full ingestion."""
+
+    store = VectorStore(config['paths']['vector'])
+    bm25_store = BM25Store(config['paths']['bm25'])
+    graph_store = GraphStore(config['paths']['graph'])
+
+    indexes_exist = (
+        not store.is_empty() and
+        os.path.exists(bm25_store.index_path) and
+        os.path.exists(graph_store.graph_path)
+    )
+
+    if indexes_exist:
+        logger.info("Indexes found on disk. Loading from cache...")
+        store.load()
+        embedder = Embedder(config['embeddings']['model'])
+        bm25_index, bm25_chunks = bm25_store.load()
+        graph = graph_store.load()
+        logger.info("Indexes loaded successfully.")
+
+        return store, embedder, bm25_index, bm25_chunks, graph
+
+    logger.info("Indexes not found. Running full ingestion...")
+    return full_ingest(file_path, config)
+
+
 def router_query(question: str, store, embedder, bm25_index, bm25_chunks: list, graph, config: dict):
     """Route question to best RAG strategy and print results."""
     logger.info(f"Router query received: {question}")
@@ -231,7 +260,7 @@ def run_evaluation(store, embedder, bm25_index, bm25_chunks: list, graph, config
 if __name__ == "__main__":
     config = load_config("config.yaml")
     
-    store, embedder, bm25_index, bm25_chunks, graph = full_ingest(
+    store, embedder, bm25_index, bm25_chunks, graph = load_or_ingest(
         r"C:\Users\Nirav Rupapara\Downloads\test_fnn_pyq.pdf", config
     )
     run_evaluation(store, embedder, bm25_index, bm25_chunks, graph, config)
