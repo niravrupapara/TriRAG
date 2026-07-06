@@ -25,7 +25,7 @@ def judge(question: str, results: list, config: dict) -> float:
     """Score retrieved chunks using LLM as judge. Returns score 1.0-5.0."""
     logger.info(f"LLM judge scoring | question: {question[:60]}")
 
-    context ="\n\n".join([r["chunk"] for r in results])
+    context = "\n\n".join([r["chunk"] for r in results[:2]])
     prompt = JUDGE_PROMPT.format(question=question, context=context)
     
     response = call_llm(prompt, config)
