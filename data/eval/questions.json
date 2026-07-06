@@ -1,0 +1,7 @@
+[
+    {"question": "What is PCA?", "expected": "principal component"},
+    {"question": "What is backpropagation?", "expected": "backpropagation"},
+    {"question": "What is a neural network?", "expected": "neural network"},
+    {"question": "What is gradient descent?", "expected": "gradient"},
+    {"question": "What is an activation function?", "expected": "activation"}
+]
