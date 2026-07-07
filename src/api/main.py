@@ -39,6 +39,13 @@ class EmbedResponse(BaseModel):
     dimension : int
     preview : list
 
+class EmbedBatchRequest(BaseModel):
+    texts : list
+
+class EmbedBatchResponse(BaseModel):
+    vectors : list
+
+
 @app.get("/health")
 def health_check():
     """Health check endpoint."""
@@ -53,3 +60,9 @@ def embed_text(request: EmbedRequest):
         dimension=len(vectore),
         preview=vectore[:5].tolist()  # Return first 5 dimensions as a preview
     )
+
+@app.post("/embed_batch", response_model=EmbedBatchResponse)
+def embed_batch(request: EmbedBatchRequest):
+    """Embed multiple texts at once using the already-loaded embedding model."""
+    vectors = app.state.embedder.embed(request.texts)
+    return EmbedBatchResponse(vectors=vectors.tolist())

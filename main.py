@@ -3,7 +3,8 @@ import os
 import yaml
 from src.ingestion.loader import load_document
 from src.chunking.chunker import chunk_text
-from src.embeddings.embedder import Embedder
+from src.embeddings.remote_embedder import RemoteEmbedder
+
 from src.storage.vector_store import VectorStore
 from src.retrieval.naive_rag import NaiveRAG
 
@@ -47,7 +48,8 @@ def ingest(file_path: str, config: dict):
         overlap=config['chunking']['chunk_overlap']
         )
     
-    embedder = Embedder(config['embeddings']['model'])
+    embedder = RemoteEmbedder()
+
     vectors = embedder.embed(chunks)
 
     store = VectorStore(config["paths"]["vector"])
@@ -56,7 +58,7 @@ def ingest(file_path: str, config: dict):
     logger.info(f"Ingestion completed | chunks saved: {len(chunks)}")
     return store, embedder
 
-def query(question: str, store: VectorStore, embedder: Embedder, config: dict):
+def query(question: str, store: VectorStore, embedder: RemoteEmbedder, config: dict):
     """Retrieve top-k chunks for a question."""
     logger.info(f"Query received: {question}")
 
@@ -84,7 +86,7 @@ def hybrid_ingest(file_path: str, config: dict):
         overlap=config['chunking']['chunk_overlap']
     )
 
-    embedder = Embedder(config['embeddings']['model'])
+    embedder = RemoteEmbedder()
     vectors = embedder.embed(chunks)
 
     store = VectorStore(config["paths"]["vector"])
@@ -101,7 +103,7 @@ def hybrid_ingest(file_path: str, config: dict):
     return store, embedder, bm25_index, bm25_chunks
 
 
-def hybrid_query(question: str, store: VectorStore, embedder: Embedder,
+def hybrid_query(question: str, store: VectorStore, embedder: RemoteEmbedder,
                  bm25_index, bm25_chunks: list, config: dict):
     """Retrieve using Hybrid RAG + cross-encoder reranking."""
     logger.info(f"Hybrid query received: {question}")
@@ -176,7 +178,7 @@ def full_ingest(file_path: str, config: dict):
         overlap=config['chunking']['chunk_overlap']
     )
 
-    embedder = Embedder(config['embeddings']['model'])
+    embedder = RemoteEmbedder()
     vectors = embedder.embed(chunks)
 
     store = VectorStore(config['paths']['vector'])
@@ -216,7 +218,7 @@ def load_or_ingest(file_path: str, config: dict):
         logger.info("Indexes found on disk. Loading from cache...")
         store.load()
         logger.info("Loading embedding model...")
-        embedder = Embedder(config['embeddings']['model'])
+        embedder = RemoteEmbedder()
         bm25_index, bm25_chunks = bm25_store.load()
         graph = graph_store.load()
         logger.info("Indexes loaded successfully.")
@@ -264,5 +266,5 @@ if __name__ == "__main__":
     store, embedder, bm25_index, bm25_chunks, graph = load_or_ingest(
         r"C:\Users\Nirav Rupapara\Downloads\test_fnn_pyq.pdf", config
     )
-    run_evaluation(store, embedder, bm25_index, bm25_chunks, graph, config)
+    router_query("What is backpropagation?", store, embedder, bm25_index, bm25_chunks, graph, config)
 
