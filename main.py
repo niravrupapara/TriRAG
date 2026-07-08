@@ -11,7 +11,7 @@ from src.retrieval.naive_rag import NaiveRAG
 from src.storage.bm25_store import BM25Store
 from src.retrieval.bm25_retriever import BM25RAG
 from src.retrieval.hybrid_rag import HybridRAG
-from src.rerankers.cross_encoder import CrossEncoderReranker
+from src.rerankers.remote_reranker import RemoteReranker
 
 from src.graph.extractor import extract_all_triples
 from src.graph.builder import build_graph
@@ -114,7 +114,7 @@ def hybrid_query(question: str, store: VectorStore, embedder: RemoteEmbedder,
 
     candidates = hybrid_retriever.retrieve(question, top_k=config["retrieval"]["final_top_k"] * 2)
 
-    reranker = CrossEncoderReranker(config["reranker"]["model"])
+    reranker = RemoteReranker()
     results = reranker.rerank(question, candidates, top_k=config["reranker"]["top_k"])
 
     print(f"\n{'='*60}")

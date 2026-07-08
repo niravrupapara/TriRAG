@@ -1,7 +1,7 @@
 from src.retrieval.naive_rag import NaiveRAG
 from src.retrieval.bm25_retriever import BM25RAG
 from src.retrieval.hybrid_rag import HybridRAG
-from src.rerankers.cross_encoder import CrossEncoderReranker
+from src.rerankers.remote_reranker import RemoteReranker
 from src.retrieval.graph_rag import GraphRAG
 
 from src.utils.logging import get_logger
@@ -47,7 +47,7 @@ def route_query(question: str, store, embedder, bm25_index, bm25_chunks: list, g
         candidates = hybrid_retriever.retrieve(
             question, top_k=config["retrieval"]["final_top_k"] *2
         )
-        reranker = CrossEncoderReranker(config["reranker"]["model"])
+        reranker = RemoteReranker()
         results = reranker.rerank(
             question, candidates, top_k=config["reranker"]["top_k"]
         )
