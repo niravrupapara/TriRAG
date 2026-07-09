@@ -264,7 +264,8 @@ if __name__ == "__main__":
     config = load_config("config.yaml")
     
     store, embedder, bm25_index, bm25_chunks, graph = load_or_ingest(
-        r"C:\Users\Nirav Rupapara\Downloads\test_fnn_pyq.pdf", config
+        "data/raw/ml_training_pipeline.txt", config
     )
     router_query("What is backpropagation?", store, embedder, bm25_index, bm25_chunks, graph, config)
+    run_evaluation(store, embedder, bm25_index, bm25_chunks, graph, config)
 

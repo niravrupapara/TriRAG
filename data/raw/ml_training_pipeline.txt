@@ -1,0 +1,55 @@
+Understanding the Neural Network Training Pipeline
+
+1. Data Collection and Preprocessing
+
+Every machine learning system begins with raw data. Data collection gathers examples from sources such as sensors, databases, or user interactions. Raw data is rarely usable directly, so preprocessing cleans it by removing duplicates, handling missing values, and normalizing numerical ranges. Normalization scales features to a similar range, which prevents features with large magnitudes from dominating the learning process. Poor preprocessing causes noisy gradients during training, which in turn slows convergence and produces an unreliable model.
+
+2. Feature Engineering
+
+Feature engineering transforms raw inputs into representations that a model can learn from effectively. Good feature engineering improves model accuracy, while poor feature engineering forces the model to waste capacity learning simple transformations instead of complex patterns. In deep learning, feature engineering is partially automated because early layers of a neural network learn low-level features, and deeper layers combine them into high-level representations.
+
+3. Neural Network Architecture
+
+A neural network is composed of layers of interconnected nodes called neurons. Each neuron receives inputs, multiplies them by learned weights, adds a bias term, and passes the result through an activation function. An activation function introduces non-linearity into the network. Without activation functions, stacking multiple layers would be mathematically equivalent to a single linear layer, which severely limits what the network can represent. Common activation functions include ReLU, sigmoid, and tanh. ReLU is widely used because it reduces the vanishing gradient problem that sigmoid and tanh activations tend to cause in deep networks.
+
+4. Forward Pass
+
+The forward pass is the process of passing input data through the network, layer by layer, to produce a prediction. Each layer's output becomes the next layer's input. The final layer produces the network's prediction, which is then compared against the true label using a loss function.
+
+5. Loss Function
+
+A loss function measures how far the network's prediction is from the true target value. A high loss indicates the model is performing poorly, while a low loss indicates the model's predictions are close to the true values. Common loss functions include mean squared error for regression tasks and cross-entropy loss for classification tasks. The choice of loss function directly affects what the optimizer is trying to minimize, and therefore shapes the entire training process.
+
+6. Backpropagation
+
+Backpropagation is the algorithm that computes how much each weight in the network contributed to the final loss. It works by applying the chain rule of calculus, propagating the error backward from the output layer to the input layer. Backpropagation produces a gradient for every weight in the network. These gradients indicate the direction and magnitude by which each weight should change to reduce the loss. Without backpropagation, training deep neural networks efficiently would not be possible, because there would be no practical way to compute how earlier layers affect the final loss.
+
+7. Gradient Descent and Optimization
+
+Gradient descent is the optimization algorithm that uses the gradients computed by backpropagation to update the network's weights. Each weight is adjusted in the opposite direction of its gradient, scaled by a value called the learning rate. A learning rate that is too high causes the optimizer to overshoot the minimum of the loss function, which leads to unstable training and a loss that oscillates or diverges. A learning rate that is too low causes training to converge very slowly, which wastes computation time and may get stuck in a poor local minimum. Choosing an appropriate learning rate is one of the most important decisions in training a neural network.
+
+Variants of gradient descent, such as stochastic gradient descent and Adam, change how the learning rate is applied and how gradients are averaged over batches of data. Adam adapts the learning rate for each parameter individually, which generally leads to faster convergence than plain stochastic gradient descent.
+
+8. Overfitting and Regularization
+
+Overfitting occurs when a model learns the training data too closely, including its noise, rather than learning generalizable patterns. Overfitting is caused by a model having too much capacity relative to the amount of training data, or by training for too many epochs without regularization. An overfit model achieves low training loss but high validation loss, because it fails to generalize to new, unseen examples.
+
+Regularization techniques are used to prevent overfitting. Dropout is a regularization technique that randomly disables a fraction of neurons during each training step. Dropout prevents neurons from becoming overly dependent on specific other neurons, which forces the network to learn more robust and redundant representations. L2 regularization adds a penalty proportional to the size of the weights to the loss function, which discourages the network from relying too heavily on any single weight.
+
+Underfitting is the opposite problem: it occurs when a model is too simple to capture the underlying pattern in the data, resulting in high loss on both training and validation sets.
+
+9. Batch Normalization
+
+Batch normalization normalizes the activations of a layer across each mini-batch during training. Batch normalization stabilizes training by reducing internal covariate shift, which is the change in the distribution of layer inputs caused by updates to previous layers. This stabilization allows the network to use higher learning rates and converge faster, while also acting as a mild form of regularization.
+
+10. Hyperparameter Tuning
+
+Hyperparameters are settings chosen before training begins, such as learning rate, batch size, and number of layers, as opposed to the weights that are learned during training. Hyperparameter tuning searches for the combination of hyperparameters that produces the best validation performance. Poor hyperparameter choices can cause even a well-designed architecture to perform badly, while good hyperparameter choices can significantly improve a simple architecture's results.
+
+11. Evaluation Metrics
+
+After training, a model is evaluated using metrics appropriate to its task. Accuracy measures the fraction of correct predictions, but it can be misleading on imbalanced datasets. Precision and recall provide a more detailed view of classification performance: precision measures how many predicted positives were correct, while recall measures how many actual positives were correctly identified. The F1 score combines precision and recall into a single number using their harmonic mean.
+
+12. Deployment
+
+Once a model achieves acceptable evaluation metrics, it is deployed into a production environment where it makes predictions on new, real-world data. Model performance in production can degrade over time due to data drift, which occurs when the distribution of incoming data changes from the distribution the model was trained on. Data drift causes the model's predictions to become less accurate, which is why deployed models are typically monitored continuously and periodically retrained on fresh data.

@@ -1,7 +1,14 @@
 [
-    {"question": "What is PCA?", "expected": "principal component"},
+    {"question": "What is an activation function?", "expected": "activation function"},
     {"question": "What is backpropagation?", "expected": "backpropagation"},
-    {"question": "What is a neural network?", "expected": "neural network"},
-    {"question": "What is gradient descent?", "expected": "gradient"},
-    {"question": "What is an activation function?", "expected": "activation"}
+    {"question": "What is dropout?", "expected": "dropout"},
+    {"question": "What is batch normalization?", "expected": "batch normalization"},
+    {"question": "What is overfitting?", "expected": "overfitting"},
+    {"question": "What causes overfitting in a neural network?", "expected": "too much capacity"},
+    {"question": "How does a high learning rate affect training?", "expected": "overshoot"},
+    {"question": "What does dropout prevent during training?", "expected": "overly dependent"},
+    {"question": "How does batch normalization affect training stability?", "expected": "stabilizes training"},
+    {"question": "What causes data drift to affect a deployed model?", "expected": "distribution"},
+    {"question": "How are the gradients from backpropagation used by gradient descent?", "expected": "update the network's weights"},
+    {"question": "Why do neural networks need activation functions instead of only linear layers?", "expected": "non-linearity"}
 ]
