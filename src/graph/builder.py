@@ -1,19 +1,22 @@
 import networkx as nx
-from typing import List, Tuple
+from typing import List
+from langchain_community.graphs.graph_document import GraphDocument
+
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-def build_graph(triples: List[Tuple[str, str, str]]) -> nx.DiGraph:
-    """Build a directed knowledge graph from a list of triples."""
-    logger.info(f"Building knowledge graph from {len(triples)} triples.")
+def build_graph(graph_documents: List[GraphDocument]) -> nx.DiGraph:
+    """Build a directed knowledge graph from langchain GraphDocument objects."""
+    logger.info(f"Building knowledge graph from {len(graph_documents)} graph documents.")
 
     graph = nx.DiGraph()
 
-    for subject, predicate, obj in triples:
-        graph.add_node(subject)
-        graph.add_node(obj)
-        graph.add_edge(subject, obj, relation=predicate)
+    for gd in graph_documents:
+        for rel in gd.relationships:
+            graph.add_node(rel.source.id, type=rel.source.type)
+            graph.add_node(rel.target.id, type=rel.target.type)
+            graph.add_edge(rel.source.id, rel.target.id, relation=rel.type)
 
     logger.info(f"Graph built | nodes: {graph.number_of_nodes()} | edges: {graph.number_of_edges()}")
     return graph

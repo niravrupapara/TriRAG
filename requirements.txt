@@ -5,6 +5,10 @@ pyyaml
 networkx
 groq
 python-dotenv
+langchain-core
+langchain-experimental
+langchain-community
+langchain-groq
 fastapi
 uvicorn
 requests

@@ -13,7 +13,7 @@ from src.retrieval.bm25_retriever import BM25RAG
 from src.retrieval.hybrid_rag import HybridRAG
 from src.rerankers.remote_reranker import RemoteReranker
 
-from src.graph.extractor import extract_all_triples
+from src.graph.extractor import extract_all_graph_documents
 from src.graph.builder import build_graph
 from src.storage.graph_store import GraphStore
 from src.retrieval.graph_rag import GraphRAG
@@ -139,13 +139,13 @@ def graph_ingest(file_path: str, config: dict):
         overlap=config['chunking']['chunk_overlap']
     )
 
-    triples = extract_all_triples(chunks, config)
-    graph = build_graph(triples)
+    graph_documents = extract_all_graph_documents(chunks, config)
+    graph = build_graph(graph_documents)
 
     graph_store = GraphStore(config["paths"]["graph"])
     graph_store.save(graph)
 
-    logger.info(f"Graph ingestion completed | triples: {len(triples)}")
+    logger.info(f"Graph ingestion completed | graph_documents: {len(graph_documents)}")
     return graph
 
 
@@ -192,12 +192,12 @@ def full_ingest(file_path: str, config: dict):
     )
     bm25_chunks = chunks
 
-    triples = extract_all_triples(chunks, config)
-    graph = build_graph(triples)
+    graph_documents = extract_all_graph_documents(chunks, config)
+    graph = build_graph(graph_documents)
     graph_store = GraphStore(config['paths']['graph'])
     graph_store.save(graph)
 
-    logger.info(f"Full ingestion complete | chunks: {len(chunks)} | triples: {len(triples)}")
+    logger.info(f"Full ingestion complete | chunks: {len(chunks)} | graph_documents: {len(graph_documents)}")
     return store, embedder, bm25_index, bm25_chunks, graph
 
 
@@ -267,5 +267,5 @@ if __name__ == "__main__":
         "data/raw/ml_training_pipeline.txt", config
     )
     router_query("What is backpropagation?", store, embedder, bm25_index, bm25_chunks, graph, config)
-    run_evaluation(store, embedder, bm25_index, bm25_chunks, graph, config)
+    # run_evaluation(store, embedder, bm25_index, bm25_chunks, graph, config)
 

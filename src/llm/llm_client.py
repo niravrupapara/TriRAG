@@ -1,5 +1,11 @@
 import os
+
+from typing import List
 from groq import Groq
+from langchain_groq import ChatGroq
+from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_core.documents import Document
+from langchain_community.graphs.graph_document import GraphDocument
 from dotenv import load_dotenv
 from src.utils.logging import get_logger
 
@@ -27,3 +33,27 @@ def call_llm(prompt: str, config: dict) -> str:
     result = response.choices[0].message.content.strip()
     logger.debug(f"LLM response received | length: {len(result)}")
     return result
+
+
+_graph_transformer = None
+
+def call_graph_llm(documents: List[Document], config: dict) -> List[GraphDocument]:
+    """Send documents to the graph-extraction LLM and return extracted graph documents."""
+
+    global _graph_transformer
+
+    if _graph_transformer is None:
+        logger.info(f"Loading ChatGroq client for graph extraction | model: {config['llm']['model']}")
+        graph_llm = ChatGroq(
+            model=config["llm"]["model"],
+            temperature=config["llm"]["temperature"],
+            api_key=_api_key
+        )
+        _graph_transformer = LLMGraphTransformer(llm=graph_llm)
+        logger.info("Graph transformer ready.")
+
+    logger.debug(f"Calling graph LLM | documents: {len(documents)}")
+    graph_documents = _graph_transformer.convert_to_graph_documents(documents)
+    logger.debug(f"Graph LLM response received | graph_documents: {len(graph_documents)}")
+    return graph_documents
+
