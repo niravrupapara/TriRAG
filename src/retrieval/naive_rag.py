@@ -20,17 +20,16 @@ class NaiveRAG(BaseRetriever):
         """Retrieve top-k chunks most similar to the query."""
         logger.info(f"Retrieving top-{top_k} chunks for query: {query[:60]}...")
 
-        query_vector = self.embedder.embed_one(query)
-        scores = np.dot(self.vector_store.vectors, query_vector)
-        top_indices = np.argsort(scores)[::-1][:top_k]
+        docs_with_scores = self.vector_store.index.similarity_search_with_score(query, k = top_k)
 
-        results = [] 
-        for i in top_indices:
+        results = []
+
+        for doc, score in docs_with_scores:
             results.append({
-                "chunk": self.vector_store.chunks[i],
-                "score": float(scores[i])
-
-            })
+                "chunk": doc.page_content,
+                "score": float(score)
+            }
+            )
 
         logger.info(f"Retrieved {len(results)} chunks | top score: {results[0]['score']:.4f}")
         return results

@@ -5,6 +5,7 @@ pyyaml
 networkx
 groq
 python-dotenv
+faiss-cpu
 langchain-core
 langchain-experimental
 langchain-community

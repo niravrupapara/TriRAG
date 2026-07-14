@@ -1,13 +1,14 @@
 import requests
 import numpy as np
 from typing import List
+from langchain_core.embeddings import Embeddings
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
 BASE_URL = "http://127.0.0.1:8000"  # Update this to your FastAPI server URL
 
-class RemoteEmbedder:
+class RemoteEmbedder(Embeddings):
     """Fetch embeddings from a remote FastAPI server."""
     
     def __init__(self, base_url: str = BASE_URL):
@@ -32,3 +33,15 @@ class RemoteEmbedder:
         logger.info("Requesting embedding for a single text from remote server.")
         
         return self.embed([text])[0]  # Reuse the batch method for a single text
+    
+
+    def embed_documents(self, texts: List[str]) -> list:
+        """Langchain-compatible batch embedding method."""
+        vectors = self.embed(texts)
+        return vectors.tolist()
+    
+    def embed_query(self, text: str) -> list:
+        """Langchain-compatible single query embedding method."""
+        vector = self.embed_one(text)
+        return vector.tolist()
+    

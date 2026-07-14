@@ -53,7 +53,7 @@ def ingest(file_path: str, config: dict):
     vectors = embedder.embed(chunks)
 
     store = VectorStore(config["paths"]["vector"])
-    store.save(vectors, chunks)
+    store.save(vectors, chunks, embedder)
 
     logger.info(f"Ingestion completed | chunks saved: {len(chunks)}")
     return store, embedder
@@ -90,7 +90,7 @@ def hybrid_ingest(file_path: str, config: dict):
     vectors = embedder.embed(chunks)
 
     store = VectorStore(config["paths"]["vector"])
-    store.save(vectors, chunks)
+    store.save(vectors, chunks, embedder)
 
     bm25_store = BM25Store(config["paths"]["bm25"])
     bm25_index, bm25_chunks = bm25_store.save(
@@ -138,7 +138,8 @@ def graph_ingest(file_path: str, config: dict):
         chunk_size=config['chunking']['chunk_size'],
         overlap=config['chunking']['chunk_overlap']
     )
-
+    
+    embedder = RemoteEmbedder()
     graph_documents = extract_all_graph_documents(chunks, config)
     graph = build_graph(graph_documents, embedder)
 
@@ -149,7 +150,7 @@ def graph_ingest(file_path: str, config: dict):
     return graph
 
 
-def graph_query(question: str, graph, config: dict):
+def graph_query(question: str, graph, embedder, config: dict):
     """Retrieve using GraphRAG knowledge graph traversal."""
     logger.info(f"Graph query received: {question}")
 
@@ -182,7 +183,7 @@ def full_ingest(file_path: str, config: dict):
     vectors = embedder.embed(chunks)
 
     store = VectorStore(config['paths']['vector'])
-    store.save(vectors, chunks)
+    store.save(vectors, chunks, embedder)
 
     bm25_store = BM25Store(config['paths']['bm25'])
     bm25_index = bm25_store.save(
@@ -216,9 +217,9 @@ def load_or_ingest(file_path: str, config: dict):
 
     if indexes_exist:
         logger.info("Indexes found on disk. Loading from cache...")
-        store.load()
         logger.info("Loading embedding model...")
         embedder = RemoteEmbedder()
+        store.load(embedder)
         bm25_index, bm25_chunks = bm25_store.load()
         graph = graph_store.load()
         logger.info("Indexes loaded successfully.")
