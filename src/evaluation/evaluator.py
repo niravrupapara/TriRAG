@@ -57,7 +57,7 @@ def evaluate(store, embedder, bm25_index, bm25_chunks: list,
             scores["hybrid"][k].append(v)
         scores["hybrid"]["llm_score"].append(judge(question, hybrid_results, config))
 
-        graph_results = GraphRAG(graph, config).retrieve(
+        graph_results = GraphRAG(graph, config, embedder).retrieve(
             question, top_k=config["graph"]["top_k"]
         )
         for k, v in compute_metrics(graph_results, expected).items():
