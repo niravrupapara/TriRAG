@@ -37,7 +37,7 @@ def route_query(question: str, store, embedder, bm25_index, bm25_chunks: list, g
     logger.info(f"Routing query | strategy: {strategy} | question: {question[:60]}")
 
     if strategy == "graph":
-        retriever = GraphRAG(graph, config)
+        retriever = GraphRAG(graph, config, embedder)
         results = retriever.retrieve(question, top_k=config["graph"]["top_k"])
 
     elif strategy == "hybrid":

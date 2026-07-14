@@ -57,3 +57,21 @@ def call_graph_llm(documents: List[Document], config: dict) -> List[GraphDocumen
     logger.debug(f"Graph LLM response received | graph_documents: {len(graph_documents)}")
     return graph_documents
 
+
+def extract_entities(query: str, config: dict) -> List[str]:
+    """Extract key entity names from a query using the LLM."""
+
+    prompt = (
+        "Extract the key entity or concept names mentioned in this"
+        "question. Return them as a comm-separated list with no "
+        "extra text.\n\n"
+        f"Question: {query}"
+    )
+
+    response = call_llm(prompt, config)
+
+    entities = [e.strip() for e in response.split(',') if e.strip()]
+
+    logger.debug(f"Extracted entities: {entities}")
+
+    return entities

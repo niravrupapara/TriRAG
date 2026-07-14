@@ -9,16 +9,17 @@ logger  = get_logger(__name__)
 class GraphRAG(BaseRetriever):
     """Retriever using knowledge graph traversal."""
 
-    def __init__(self, graph: nx.DiGraph, config: dict):
+    def __init__(self, graph: nx.DiGraph, config: dict, embedder):
         self.graph = graph
         self.config = config
+        self.embedder = embedder
         logger.debug("GraphRAG initialized.")
 
     def retrieve(self, query: str, top_k: int) -> List[dict]:
         """Retrive relevant chunks by traversing the knowledge graph."""
         logger.info(f"GraphRAG retrieving for query: {query[:60]}...")
 
-        results = query_graph(query, self.graph, self.config)
+        results = query_graph(query, self.graph, self.config, self.embedder)
         results = results[:top_k]
 
         logger.info(f"GraphRAG returned {len(results)} results.")

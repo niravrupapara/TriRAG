@@ -140,7 +140,7 @@ def graph_ingest(file_path: str, config: dict):
     )
 
     graph_documents = extract_all_graph_documents(chunks, config)
-    graph = build_graph(graph_documents)
+    graph = build_graph(graph_documents, embedder)
 
     graph_store = GraphStore(config["paths"]["graph"])
     graph_store.save(graph)
@@ -153,7 +153,7 @@ def graph_query(question: str, graph, config: dict):
     """Retrieve using GraphRAG knowledge graph traversal."""
     logger.info(f"Graph query received: {question}")
 
-    retriever = GraphRAG(graph, config)
+    retriever = GraphRAG(graph, config, embedder)
     results = retriever.retrieve(question, top_k=config["graph"]["top_k"])
 
     print(f"\n{'='*60}")
@@ -193,7 +193,7 @@ def full_ingest(file_path: str, config: dict):
     bm25_chunks = chunks
 
     graph_documents = extract_all_graph_documents(chunks, config)
-    graph = build_graph(graph_documents)
+    graph = build_graph(graph_documents, embedder)
     graph_store = GraphStore(config['paths']['graph'])
     graph_store.save(graph)
 
@@ -266,6 +266,6 @@ if __name__ == "__main__":
     store, embedder, bm25_index, bm25_chunks, graph = load_or_ingest(
         "data/raw/ml_training_pipeline.txt", config
     )
-    router_query("What is backpropagation?", store, embedder, bm25_index, bm25_chunks, graph, config)
+    router_query("How does backpropagation relate to gradient descent?", store, embedder, bm25_index, bm25_chunks, graph, config)
     # run_evaluation(store, embedder, bm25_index, bm25_chunks, graph, config)
 
