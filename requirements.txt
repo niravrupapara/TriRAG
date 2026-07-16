@@ -3,13 +3,13 @@ rank-bm25
 sentence-transformers
 pyyaml
 networkx
-groq
+
 python-dotenv
 faiss-cpu
 langchain-core
 langchain-experimental
 langchain-community
-langchain-groq
+langchain-mistralai
 fastapi
 uvicorn
 requests

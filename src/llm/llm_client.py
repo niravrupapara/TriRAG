@@ -1,8 +1,8 @@
 import os
 
 from typing import List
-from groq import Groq
-from langchain_groq import ChatGroq
+
+from langchain_mistralai import ChatMistralAI
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_core.documents import Document
 from langchain_community.graphs.graph_document import GraphDocument
@@ -13,24 +13,39 @@ logger = get_logger(__name__)
 
 load_dotenv()
 
-_api_key = os.getenv("GROQ_API_KEY")
+_api_key = os.getenv("MISTRAL_API_KEY")
 if not _api_key:
-    raise ValueError("GROQ_API_KEY not found in .env file.")
-_client = Groq(api_key=_api_key)
+    raise ValueError("MISTRAL_API_KEY not found in .env file.")
+
+
+_client = None
+
+def _get_client(config: dict) -> ChatMistralAI:
+    """Lazily build and cache the shared ChatMistralAI client.""" 
+
+    global _client
+    
+    if _client is None:
+        logger.info(f"Loading ChatMistral client | model: {config['llm']['model']}")
+        _client = ChatMistralAI(
+            model = config["llm"]["model"],
+            temperature=config["llm"]["temperature"],
+            max_tokens=config["llm"]["max_tokens"],
+            api_key=_api_key
+        )
+    return _client
 
 def call_llm(prompt: str, config: dict) -> str:
-    """send a prompt to Groq LLM and return the response text."""
+    """send a prompt to Mistral LLM and return the response text."""
 
     logger.debug(f"Calling LLM | model: {config['llm']['model']} | prompt length: {len(prompt)}")
 
-    response = _client.chat.completions.create(
-        model=config['llm']['model'],
-        messages=[{"role": "user", "content": prompt}],
-        temperature=config['llm']['temperature'],
-        max_tokens=config['llm']['max_tokens']
-    )
+    client = _get_client(config)
 
-    result = response.choices[0].message.content.strip()
+    response = client.invoke(prompt)
+
+
+    result = response.content.strip()
     logger.debug(f"LLM response received | length: {len(result)}")
     return result
 
@@ -43,12 +58,8 @@ def call_graph_llm(documents: List[Document], config: dict) -> List[GraphDocumen
     global _graph_transformer
 
     if _graph_transformer is None:
-        logger.info(f"Loading ChatGroq client for graph extraction | model: {config['llm']['model']}")
-        graph_llm = ChatGroq(
-            model=config["llm"]["model"],
-            temperature=config["llm"]["temperature"],
-            api_key=_api_key
-        )
+        logger.info(f"Loading Mistral client for graph extraction | model: {config['llm']['model']}")
+        graph_llm = _get_client(config)
         _graph_transformer = LLMGraphTransformer(llm=graph_llm)
         logger.info("Graph transformer ready.")
 
