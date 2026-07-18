@@ -28,7 +28,7 @@ def evaluate(store, embedder, bm25_index, bm25_chunks: list,
     questions = load_questions(questions_path)
 
     strategies = ["naive", "hybrid", "graph"]
-    scores = {s: {"hit_rate": [], "mrr": [], "ndcg": [], "llm_score": []} for s in strategies}
+    scores = {s: {"hit_rate": [], "mrr": [], "ndcg": [], "precision": [], "recall": [], "llm_score": []} for s in strategies}
 
     reranker = CrossEncoderReranker(config["reranker"]["model"])
     logger.info("CrossEncoderReranker loaded.")
@@ -41,7 +41,7 @@ def evaluate(store, embedder, bm25_index, bm25_chunks: list,
         naive_results = NaiveRAG(store, embedder).retrieve(
             question, top_k=config["retrieval"]["dense_top_k"]
         )
-        for k, v in compute_metrics(naive_results, expected).items():
+        for k, v in compute_metrics(naive_results, expected, embedder).items():
             scores["naive"][k].append(v)
         scores["naive"]["llm_score"].append(judge(question, naive_results, config))
 
@@ -53,14 +53,14 @@ def evaluate(store, embedder, bm25_index, bm25_chunks: list,
         hybrid_results = reranker.rerank(
             question, candidates, top_k=config["reranker"]["top_k"]
         )
-        for k, v in compute_metrics(hybrid_results, expected).items():
+        for k, v in compute_metrics(hybrid_results, expected, embedder).items():
             scores["hybrid"][k].append(v)
         scores["hybrid"]["llm_score"].append(judge(question, hybrid_results, config))
 
         graph_results = GraphRAG(graph, config, embedder).retrieve(
             question, top_k=config["graph"]["top_k"]
         )
-        for k, v in compute_metrics(graph_results, expected).items():
+        for k, v in compute_metrics(graph_results, expected, embedder).items():
             scores["graph"][k].append(v)
         scores["graph"]["llm_score"].append(judge(question, graph_results, config))
         time.sleep(3)
@@ -81,7 +81,7 @@ def print_report(summary: dict) -> None:
     print(f"\n{'='*65}")
     print(f"{'EVALUATION REPORT':^65}")
     print(f"{'='*65}")
-    print(f"{'Strategy':<12} {'Hit Rate':>10} {'MRR':>10} {'NDCG':>10} {'LLM Score':>12}")
+    print(f"{'Strategy':<12} {'Hit Rate':>10} {'MRR':>10} {'NDCG':>10} {'Precision':>10} {'Recall':>10} {'LLM Score':>12}")
     print(f"{'-'*65}")
     for strategy, metrics in summary.items():
         print(
@@ -89,6 +89,8 @@ def print_report(summary: dict) -> None:
             f"{metrics['hit_rate']:>10.4f}"
             f"{metrics['mrr']:>10.4f}"
             f"{metrics['ndcg']:>10.4f}"
+            f"{metrics['precision']:>10.4f}"
+            f"{metrics['recall']:>10.4f}"
             f"{metrics['llm_score']:>12.4f}"
         )
     print(f"{'='*65}\n")

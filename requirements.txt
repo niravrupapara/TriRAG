@@ -13,4 +13,5 @@ langchain-mistralai
 fastapi
 uvicorn
 requests
+datasets
 -e .

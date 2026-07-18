@@ -265,7 +265,7 @@ if __name__ == "__main__":
     config = load_config("config.yaml")
     
     store, embedder, bm25_index, bm25_chunks, graph = load_or_ingest(
-        "data/raw/ml_training_pipeline.txt", config
+        "data/raw/hotpotqa_subset.txt", config
     )
     router_query("How does backpropagation relate to gradient descent?", store, embedder, bm25_index, bm25_chunks, graph, config)
     run_evaluation(store, embedder, bm25_index, bm25_chunks, graph, config)
