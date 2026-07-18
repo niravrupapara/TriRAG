@@ -24,7 +24,7 @@ def get_logger(name: str) -> logging.Logger:
     # file handler
     log_path = Path('logs/app.log')
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    file_handler = logging.FileHandler(log_path)
+    file_handler = logging.FileHandler(log_path, encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 
