@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from main import load_config
+from src.engine import load_config
 from src.embeddings.embedder import Embedder
 
 from src.rerankers.cross_encoder import CrossEncoderReranker
