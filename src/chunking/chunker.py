@@ -54,4 +54,4 @@ def chunk_text(text: str, strategy: str, chunk_size: int, overlap: int) -> List[
         return recursive_chunk(text, chunk_size, overlap)
     else:
         logger.error(f"Unsupported chunking strategy: {strategy}")
-        raise ValueError(f"Unsupported chunking strategy: {strategy}")
+        raise ValueError(f"Unsupported chunking strategy: {strategy}")
