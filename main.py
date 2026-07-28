@@ -2,13 +2,13 @@ from src.engine import TriRAG
 
 if __name__ == "__main__":
     # 1. Initialize TriRAG Engine
-    rag = TriRAG("config.yaml")
+    rag = TriRAG(collection_name="my_study_data")
 
     # 2. Load cached indexes from disk (or run ingestion if missing)
-    rag.load_or_ingest("data/raw/hotpotqa_subset.txt")
+    rag.load_or_ingest("data/raw/sample_test.txt")
 
     # 3. Ask a question (Smart Router automatically picks the best strategy)
-    question = "Which Marvel Cinematic Universe film was directed by the same person who directed Sinister?"
+    question = "How does backpropagation relate to gradient descent?"
     strategy_used, results = rag.query(question)
 
     # 4. Print results

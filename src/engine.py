@@ -2,6 +2,7 @@ import os
 import gc
 import json
 import shutil
+import uuid
 import hashlib
 import yaml
 from typing import Dict, List, Tuple, Optional, Any
@@ -51,11 +52,17 @@ class TriRAG:
     Retrieval, Generation, Evaluation, and Memory Management.
     """
 
-    def __init__(self, collection_name: str = "default", config_path: str = "config.yaml"):
-        self.collection_name = collection_name
+    def __init__(self, collection_name: Optional[str] = None, config_path: str = "config.yaml"):
         self.config = load_config(config_path)
 
-        # Isolated directory structure per collection
+        # Handle anonymous UUID instances vs named collections
+        if collection_name is None:
+            self.collection_name = f"anon_{uuid.uuid4().hex[:8]}"
+            self.is_anonymous = True
+        else:
+            self.collection_name = collection_name
+            self.is_anonymous = False
+
         self.base_dir = os.path.join("data", "collections", self.collection_name)
         self.vector_path = os.path.join(self.base_dir, "vector")
         self.bm25_path = os.path.join(self.base_dir, "bm25")
@@ -71,7 +78,10 @@ class TriRAG:
         self.bm25_chunks = []
         self.graph = None
 
-        logger.info(f"TriRAG Engine initialized | collection: '{self.collection_name}' | path: {self.base_dir}")
+        logger.info(
+            f"TriRAG Engine initialized | collection: '{self.collection_name}' | "
+            f"anonymous: {self.is_anonymous} | path: {self.base_dir}"
+        )
 
     def __enter__(self):
         """Enable Python context manager support (with TriRAG() as rag:)."""
@@ -80,6 +90,14 @@ class TriRAG:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Automatically unload memory upon exiting with block."""
         self.unload()
+
+    def __del__(self):
+        """Auto-delete temp folder for anonymous instances on garbage collection."""
+        if getattr(self, "is_anonymous", False) and os.path.exists(getattr(self, "base_dir", "")):
+            try:
+                shutil.rmtree(self.base_dir)
+            except Exception:
+                pass
 
     def full_ingest(self, file_path: str):
         """Load, chunk, embed, and build BM25 + Knowledge Graph for all strategies."""
@@ -113,6 +131,7 @@ class TriRAG:
         with open(self.metadata_path, "w", encoding="utf-8") as f:
             json.dump({
                 "collection_name": self.collection_name,
+                "is_anonymous": self.is_anonymous,
                 "file_path": file_path,
                 "file_hash": file_hash,
                 "num_chunks": len(chunks)
