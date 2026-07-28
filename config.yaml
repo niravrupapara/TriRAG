@@ -12,7 +12,7 @@ paths:
   logs: logs
 
 chunking:
-  strategy: recursive   # options: fixed, recursive, semantic
+  strategy: recursive   # options: fixed, recursive
   chunk_size: 512
   chunk_overlap: 50
 

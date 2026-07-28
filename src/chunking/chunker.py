@@ -29,12 +29,12 @@ def recursive_chunk(text: str, chunk_size: int, overlap: int) -> List[str]:
                 chunks = []
                 current = ""
                 for part in parts:
-                    if len(current) + len(part) + len(sep) <=chunk_size:
+                    if len(current) + len(part) + len(sep) <= chunk_size:
                         current += part + sep
                     else:
                         if current:
                             chunks.append(current.strip())
-                        current = current[-overlap:] + part +sep if overlap else part + sep
+                        current = current[-overlap:] + part + sep if overlap else part + sep
                 if current:
                     chunks.append(current.strip())
                 return chunks
@@ -42,24 +42,6 @@ def recursive_chunk(text: str, chunk_size: int, overlap: int) -> List[str]:
 
     chunks = split(text, separators)
     logger.info(f"Text recursively chunked into {len(chunks)} chunks | chunk size: {chunk_size} | overlap: {overlap}")
-    return chunks
-
-def semantic_chunk(text: str, chunk_size: int, overlap: int) -> List[str]:
-    """Split text by sentences, grouping by meaning."""
-    sentences = text.replace('\n', ' ').split('. ')
-    chunks = []
-    current = ""
-
-    for sentence in sentences:
-        if len(current) + len(sentence) <=chunk_size:
-            current += sentence + '. '
-        else:
-            if current:
-                chunks.append(current.strip())
-            current = current[-overlap:] + sentence + '. ' if overlap else sentence + '. '
-    if current:
-        chunks.append(current.strip())
-    logger.info(f"Text semantically chunked into {len(chunks)} chunks | chunk size: {chunk_size} | overlap: {overlap}")
     return chunks
 
 
@@ -70,8 +52,6 @@ def chunk_text(text: str, strategy: str, chunk_size: int, overlap: int) -> List[
         return fixed_chunk(text, chunk_size, overlap)
     elif strategy == 'recursive':
         return recursive_chunk(text, chunk_size, overlap)
-    elif strategy == 'semantic':
-        return semantic_chunk(text, chunk_size, overlap)
     else:
         logger.error(f"Unsupported chunking strategy: {strategy}")
-        raise ValueError(f"Unsupported chunking strategy: {strategy}")
+        raise ValueError(f"Unsupported chunking strategy: {strategy}")
