@@ -262,6 +262,14 @@ GRAPH            0.8500     0.8000     0.8240     0.4800     0.7800       4.4000
 
 ---
 
-## 📄 License
+## 📄 License & Author Details
 
-Distributed under the MIT License. See `LICENSE` for details.
+### 👨‍💻 Developed By
+* **Author**: Nirav Rupapara
+* **Email**: [niravrupapara60@gmail.com](mailto:niravrupapara60@gmail.com)
+* **Project Repository**: [TriRAG](https://github.com/niravrupapara/TriRAG)
+
+---
+
+### 📜 License
+Distributed under the **MIT License**. Copyright © 2026 Nirav Rupapara. All rights reserved.
