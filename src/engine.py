@@ -21,6 +21,7 @@ from src.retrieval.hybrid_rag import HybridRAG
 from src.retrieval.graph_rag import GraphRAG
 from src.rerankers.remote_reranker import RemoteReranker
 from src.routing.router import route_query
+from src.llm.llm_client import call_llm
 from src.evaluation.evaluator import evaluate, print_report
 from src.utils.logging import get_logger
 
@@ -201,6 +202,25 @@ class TriRAG:
             retriever = NaiveRAG(self.vector_store, self.embedder)
             results = retriever.retrieve(question, top_k=self.config["retrieval"]["dense_top_k"])
             return "naive", results
+
+    def generate(self, question: str, results: List[dict]) -> str:
+        """Synthesize a final conversational text response using Mistral LLM and retrieved context chunks."""
+        logger.info(f"Generating LLM response for query: '{question[:60]}'")
+        context_text = "\n\n".join([r["chunk"] for r in results])
+        prompt = (
+            "You are an expert AI assistant. Answer the user's question clearly, thoroughly, and conversationally "
+            "based on the provided context facts below.\n\n"
+            f"Context:\n{context_text}\n\n"
+            f"Question: {question}\n\n"
+            "Detailed Answer:"
+        )
+        return call_llm(prompt, self.config)
+
+    def query_and_generate(self, question: str, strategy: str = "auto") -> Tuple[str, str, List[dict]]:
+        """Retrieve relevant context chunks and synthesize final conversational LLM response."""
+        strategy_used, results = self.query(question, strategy=strategy)
+        answer = self.generate(question, results)
+        return strategy_used, answer, results
 
     def evaluate(self) -> dict:
         """Run full evaluation benchmark across all RAG strategies."""

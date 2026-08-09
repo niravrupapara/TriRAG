@@ -7,16 +7,17 @@ if __name__ == "__main__":
     # 2. Load cached indexes from disk (or run ingestion if missing)
     rag.load_or_ingest("data/raw/sample_test.txt")
 
-    # 3. Ask a question (Smart Router automatically picks the best strategy)
-    question = "How does backpropagation relate to gradient descent?"
-    strategy_used, results = rag.query(question)
+    question = "How does backpropagation work in neural networks?"
+    strategy_used, answer, results = rag.query_and_generate(question, strategy="hybrid")
 
-    # 4. Print results
+    # 4. Print results & LLM Answer
     print(f"\n{'='*60}")
-    print(f"Query   : {question}")
-    print(f"Strategy: {strategy_used.upper()}")
+    print(f"Query    : {question}")
+    print(f"Strategy : {strategy_used.upper()}")
+    print(f"{'='*60}")
+    print(f"AI ANSWER:\n{answer}")
     print(f"{'='*60}")
     for i, r in enumerate(results):
-        print(f"\n--- Result {i+1} | Score: {r.get('score', 0.0):.4f} ---")
+        print(f"\n--- Context Chunk {i+1} | Score: {r.get('score', 0.0):.4f} ---")
         print(r["chunk"])
     print(f"{'='*60}\n")

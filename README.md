@@ -179,14 +179,16 @@ rag = TriRAG()
 # 2. Ingest document (auto-calculates MD5 hash and builds indexes)
 rag.load_or_ingest("data/raw/sample_test.txt")
 
-# 3. Query (Smart Router automatically selects optimal strategy)
+# 3. Retrieval + LLM Text Answer Synthesis (Mistral AI)
+strategy, answer, results = rag.query_and_generate("How does backpropagation relate to gradient descent?")
+
+print(f"Strategy Selected : {strategy}")
+print(f"AI Synthesized Answer:\n{answer}")
+
+# 4. Context Chunks Retrieval Only (Without LLM generation)
 strategy, results = rag.query("How does backpropagation relate to gradient descent?")
 
-print(f"Strategy Selected: {strategy}")
-for r in results:
-    print(f"- {r['chunk']} (Score: {r.get('score', 0.0):.4f})")
-
-# 4. Free RAM memory
+# 5. Free RAM memory
 rag.unload()
 ```
 
