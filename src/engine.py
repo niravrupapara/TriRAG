@@ -7,14 +7,11 @@ import hashlib
 import yaml
 from typing import Dict, List, Tuple, Optional, Any
 
-from src.ingestion.loader import load_document
-from src.chunking.chunker import chunk_text
+from src.ingestion.pipeline import IngestionPipeline
 from src.embeddings.remote_embedder import RemoteEmbedder
 from src.storage.vector_store import VectorStore
 from src.storage.bm25_store import BM25Store
 from src.storage.graph_store import GraphStore
-from src.graph.extractor import extract_all_graph_documents
-from src.graph.builder import build_graph
 from src.retrieval.naive_rag import NaiveRAG
 from src.retrieval.bm25_retriever import BM25RAG
 from src.retrieval.hybrid_rag import HybridRAG
@@ -74,6 +71,13 @@ class TriRAG:
         self.vector_store = VectorStore(self.vector_path)
         self.bm25_store = BM25Store(self.bm25_path)
         self.graph_store = GraphStore(self.graph_path)
+        self.ingestion_pipeline = IngestionPipeline(
+            self.config,
+            self.embedder,
+            self.vector_store,
+            self.bm25_store,
+            self.graph_store,
+        )
 
         self.bm25_index = None
         self.bm25_chunks = []
@@ -104,27 +108,10 @@ class TriRAG:
         """Load, chunk, embed, and build BM25 + Knowledge Graph for all strategies."""
         logger.info(f"Starting full ingestion for collection '{self.collection_name}' | file: {file_path}")
 
-        text = load_document(file_path)
-        chunks = chunk_text(
-            text,
-            strategy=self.config["chunking"]["strategy"],
-            chunk_size=self.config["chunking"]["chunk_size"],
-            overlap=self.config["chunking"]["chunk_overlap"]
-        )
-
-        vectors = self.embedder.embed(chunks)
-        self.vector_store.save(vectors, chunks, self.embedder)
-
-        self.bm25_index = self.bm25_store.save(
-            chunks,
-            k1=self.config["bm25"]["k1"],
-            b=self.config["bm25"]["b"]
-        )
-        self.bm25_chunks = chunks
-
-        graph_documents = extract_all_graph_documents(chunks, self.config)
-        self.graph = build_graph(graph_documents, self.embedder)
-        self.graph_store.save(self.graph)
+        result = self.ingestion_pipeline.ingest(file_path)
+        self.bm25_index = result.bm25_index
+        self.bm25_chunks = result.chunks
+        self.graph = result.graph
 
         # Save metadata JSON to validate cache on future runs
         file_hash = calculate_file_hash(file_path)
@@ -135,10 +122,10 @@ class TriRAG:
                 "is_anonymous": self.is_anonymous,
                 "file_path": file_path,
                 "file_hash": file_hash,
-                "num_chunks": len(chunks)
+                "num_chunks": len(result.chunks)
             }, f, indent=2)
 
-        logger.info(f"Full ingestion complete | collection: '{self.collection_name}' | chunks: {len(chunks)}")
+        logger.info(f"Full ingestion complete | collection: '{self.collection_name}' | chunks: {len(result.chunks)}")
 
     def load_or_ingest(self, file_path: str, force_reingest: bool = False):
         """Load indexes from disk if cached & hash matches, else run full ingestion."""
