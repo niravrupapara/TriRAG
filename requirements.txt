@@ -1,17 +1,26 @@
+# Document ingestion & parsing
 pypdf
-rank-bm25
+
+# Embeddings & Vector Search
+faiss-cpu
 sentence-transformers
-pyyaml
+
+# Retrieval & Fusion
+rank-bm25
 networkx
 
+# LangChain & LLM
 python-dotenv
-faiss-cpu
 langchain-core
 langchain-experimental
-langchain-community
 langchain-mistralai
+
+# API Microservice
 fastapi
 uvicorn
 requests
+
+# Evaluation (RAGAS Benchmarks)
+ragas
 datasets
 -e .
