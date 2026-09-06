@@ -1,29 +1,30 @@
-import networkx as nx
-from typing import List
-from langchain_community.graphs.graph_document import GraphDocument
 
+import networkx as nx
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-def build_graph(graph_documents: List[GraphDocument], embedder) -> nx.DiGraph:
-    """Build a directed knowledge graph from langchain GraphDocument objects."""
-    logger.info(f"Building knowledge graph from {len(graph_documents)} graph documents.")
 
+def build_graph(graph_documents):
+    logger.info(f"Building knowledge graph from {len(graph_documents)} graph documents")
     graph = nx.DiGraph()
 
-    for gd in graph_documents:
-        for rel in gd.relationships:
-            graph.add_node(rel.source.id, type=rel.source.type)
-            graph.add_node(rel.target.id, type=rel.target.type)
-            graph.add_edge(rel.source.id, rel.target.id, relation=rel.type)
+    for document in graph_documents:
+        chunk = document.source.page_content if document.source else ""
 
+        for rel in document.relationships:
+            if not rel.source.id or not rel.target.id:
+                continue
 
-    node_labels = list(graph.nodes())
-    vectors = embedder.embed(node_labels)
-    for node, vector in zip(node_labels, vectors):
-        graph.nodes[node]["embedding"] = vector
+            graph.add_node(rel.source.id)
+            graph.add_node(rel.target.id)
 
+            graph.add_edge(
+                rel.source.id,
+                rel.target.id,
+                relation=rel.type,
+                chunk=chunk
+            )
 
-    logger.info(f"Graph built | nodes: {graph.number_of_nodes()} | edges: {graph.number_of_edges()}")
+    logger.info(f"Graph constructed: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
     return graph

@@ -1,24 +1,26 @@
 
-from typing import List
 from langchain_core.documents import Document
-from langchain_community.graphs.graph_document import GraphDocument
-
-from src.llm.llm_client import call_graph_llm
+from langchain_experimental.graph_transformers import LLMGraphTransformer
 from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-def extract_all_graph_documents(chunks: List[str], config: dict) -> List[GraphDocument]:
-    """Extract structured graph documents (typed nodes + relationships) from chunks."""
-    logger.info(f"Extracting graph documents from {len(chunks)} chunks...")
+def extract_graph_documents(chunks, llm, batch_size=5):
+    logger.info(f"Extracting graph relationships from {len(chunks)} chunks (batch_size={batch_size})")
+    transformer = LLMGraphTransformer(llm=llm)
+    graph_documents = []
 
-    documents = [Document(page_content=chunk) for chunk in chunks]
-    graph_documents = call_graph_llm(documents, config)
+    documents = [
+        Document(page_content=chunk["text"])
+        for chunk in chunks
+    ]
 
-    total_nodes = sum(len(gd.nodes) for gd in graph_documents)
-    total_rels = sum(len(gd.relationships) for gd in graph_documents)
+    for i in range(0, len(documents), batch_size):
+        batch = documents[i:i + batch_size]
+        graph_documents.extend(
+            transformer.convert_to_graph_documents(batch)
+        )
 
-    logger.info(f"Graph extraction complete | nodes: {total_nodes} | relationships: {total_rels}")
-
+    logger.info(f"Extracted {len(graph_documents)} graph document representations")
     return graph_documents
