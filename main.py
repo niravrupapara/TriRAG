@@ -1,23 +1,29 @@
-from src.engine import TriRAG
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from src.engine import Engine
+from src.utils.logging import get_logger
+
+logger = get_logger(__name__)
+
+
+def main():
+    pdf_path = "data/sample_small.pdf"
+
+    logger.info(f"Starting TriRAG with document: {pdf_path}")
+    engine = Engine(pdf_path)
+    
+    # question = "Why is cross-encoder reranking performed after initial retrieval?"
+    question = "What is the capital of Japan?"
+    logger.info(f"Running query: {question}")
+
+    answer, chunks = engine.query(question)
+
+    logger.info("Query completed successfully.")
+    print(f"\nQuestion: {question}")
+    print(f"\nAnswer:\n{answer}")
+
 
 if __name__ == "__main__":
-    # 1. Initialize TriRAG Engine
-    rag = TriRAG(collection_name="my_study_data")
-
-    # 2. Load cached indexes from disk (or run ingestion if missing)
-    rag.load_or_ingest("data/raw/sample_test.txt")
-
-    question = "How does backpropagation work in neural networks?"
-    strategy_used, answer, results = rag.query_and_generate(question, strategy="hybrid")
-
-    # 4. Print results & LLM Answer
-    print(f"\n{'='*60}")
-    print(f"Query    : {question}")
-    print(f"Strategy : {strategy_used.upper()}")
-    print(f"{'='*60}")
-    print(f"AI ANSWER:\n{answer}")
-    print(f"{'='*60}")
-    for i, r in enumerate(results):
-        print(f"\n--- Context Chunk {i+1} | Score: {r.get('score', 0.0):.4f} ---")
-        print(r["chunk"])
-    print(f"{'='*60}\n")
+    main()
