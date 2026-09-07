@@ -40,4 +40,4 @@ def query_graph(query, graph, chunks, embedder, top_k=5, max_hops=2):
                     seen.add(chunk)
                     results.append(chunk)
 
-    return results
+    return results[:top_k]

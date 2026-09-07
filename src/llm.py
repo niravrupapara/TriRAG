@@ -51,7 +51,7 @@ Context:
 Return only YES or NO.
 """
         response = self.llm.invoke(prompt).content.strip().upper()
-        return response.startswith("YES")
+        return "YES" in response
 
     def rewrite_query(self, query):
         logger.info(f"Requesting query rewrite from LLM for: '{query}'")

@@ -93,6 +93,8 @@ def embed_batch(request: EmbedBatchRequest):
 
 @app.post("/rerank")
 def rerank(request: RerankRequest):
+    if not request.candidates:
+        return {"results": []}
 
     pairs = [
         [request.question, candidate["text"] if isinstance(candidate, dict) else str(candidate)]

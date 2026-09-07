@@ -12,6 +12,9 @@ class Reranker:
 
     def rerank(self, query, chunks, top_k=3):
         logger.info(f"Reranking {len(chunks)} candidate chunks to top-{top_k}")
+        if not chunks:
+            return []
+
         pairs = [[query, chunk] for chunk in chunks]
         scores = self.model.predict(pairs)
 

@@ -14,8 +14,9 @@ def main():
     logger.info(f"Starting TriRAG with document: {pdf_path}")
     engine = Engine(pdf_path)
     
-    # question = "Why is cross-encoder reranking performed after initial retrieval?"
-    question = "What is the capital of Japan?"
+    question = "Why is cross-encoder reranking performed after initial retrieval?"
+    # question = "What is the capital of Japan?"
+
     logger.info(f"Running query: {question}")
 
     answer, chunks = engine.query(question)

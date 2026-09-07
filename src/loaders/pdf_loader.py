@@ -1,3 +1,4 @@
+import os
 from pypdf import PdfReader
 from .base import BaseLoader
 from src.utils.logging import get_logger
@@ -9,6 +10,8 @@ class PDFLoader(BaseLoader):
 
     def load(self, file_path):
         logger.info(f"Loading PDF document: {file_path}")
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"PDF file does not exist: {file_path}")
         reader = PdfReader(file_path)
         text = ""
 
