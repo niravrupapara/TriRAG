@@ -1,4 +1,4 @@
-# 🚀 TriRAG: Production-Grade Multi-Strategy Hybrid & Graph RAG Engine
+# 🚀 TriRAG: Agentic Multi-Strategy Hybrid & Graph RAG Engine
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -6,8 +6,10 @@
 [![FAISS](https://img.shields.io/badge/VectorStore-FAISS-orange.svg)](https://github.com/facebookresearch/faiss)
 [![LangChain](https://img.shields.io/badge/Framework-LangChain-brightgreen.svg)](https://python.langchain.com/)
 [![NetworkX](https://img.shields.io/badge/Graph-NetworkX-red.svg)](https://networkx.org/)
+[![Mistral AI](https://img.shields.io/badge/LLM-Mistral_AI-orange.svg)](https://mistral.ai/)
+[![Ragas](https://img.shields.io/badge/Eval-Ragas-purple.svg)](https://ragas.io/)
 
-**TriRAG** is an advanced, production-grade Retrieval-Augmented Generation (RAG) library and microservice architecture. It unifies **Naive Dense Vector Search (FAISS)**, **Lexical Keyword Search (BM25)** fused via **Reciprocal Rank Fusion (RRF)**, and **Knowledge Graph Subgraph Traversal (GraphRAG)** into a single adaptive engine with **Cross-Encoder Reranking**, **Anonymous Object Instance Isolation**, and an **MLOps Evaluation Suite**.
+**TriRAG** is an advanced, modular Retrieval-Augmented Generation (RAG) framework and microservice architecture. It combines **Dense Vector Search (FAISS)**, **Lexical Keyword Search (BM25)**, and **Knowledge Graph Subgraph Traversal (GraphRAG)** merged via **Reciprocal Rank Fusion (RRF)**. Precision is enforced using **Cross-Encoder Reranking**, and generation reliability is ensured through an **Agentic Corrective RAG (CRAG)** loop with self-reflection relevance grading and automated query rewriting.
 
 ---
 
@@ -16,62 +18,71 @@
 - [Key Features](#-key-features)
 - [Project Directory Structure](#-project-directory-structure)
 - [Installation & Setup](#-installation--setup)
-- [Python SDK Usage](#-python-sdk-usage)
-- [FastAPI Microservice](#-fastapi-microservice)
-- [Evaluation & Benchmarking](#-evaluation--benchmarking)
-- [License](#-license)
+- [Quick Start & SDK Usage](#-quick-start--sdk-usage)
+- [FastAPI Model Microservice](#-fastapi-model-microservice)
+- [Agentic Corrective RAG (CRAG) Workflow](#-agentic-corrective-rag-crag-workflow)
+- [Ragas Evaluation & Benchmarking](#-ragas-evaluation--benchmarking)
+- [License & Author Details](#-license--author-details)
 
 ---
 
 ## 🏗️ Architecture Overview
 
-### 1️⃣ Ingestion & Triple-Indexing Pipeline
+### 1️⃣ Ingestion & Multi-Index Construction
 ```mermaid
 flowchart LR
-    Doc["📄 PDF / TXT"] --> Chunker["✂️ Chunker"]
-    Chunker --> FAISS[("⚡ FAISS Vector Store")]
+    Doc["📄 Source PDF / TXT"] --> Loader["📥 Loader (PDF / TXT)"]
+    Loader --> Chunker["✂️ Recursive Chunker"]
+    Chunker --> Embedder["⚡ SentenceTransformer (BGE-Small)"]
+    Embedder --> FAISS[("⚡ FAISS Vector Store")]
     Chunker --> BM25[("🔤 BM25 Lexical Store")]
-    Chunker --> Graph[("🕸️ NetworkX Knowledge Graph")]
+    Chunker --> Extractor["🤖 LLMGraphTransformer"]
+    Extractor --> Graph[("🕸️ NetworkX Knowledge Graph")]
 ```
 
-### 2️⃣ Smart Intent Query Router
+### 2️⃣ Tri-Strategy Retrieval & RRF Fusion
 ```mermaid
 flowchart LR
-    Query["❓ User Query"] --> Router{"🧠 Smart Router"}
-    Router -->|"Relationship Query"| GraphEngine["🕸️ GraphRAG Engine"]
-    Router -->|"Short Query (<= 3 words)"| HybridEngine["⚡ Hybrid RAG Engine"]
-    Router -->|"Default Semantic Query"| NaiveEngine["🔍 Naive Vector RAG"]
+    Query["❓ User Query"] --> Naive["🔍 Naive Vector Retriever (FAISS)"]
+    Query --> BM25R["🔤 BM25 Lexical Retriever"]
+    Query --> GraphR["🕸️ Graph Subgraph Retriever"]
+    Naive & BM25R & GraphR --> RRF["🧮 Reciprocal Rank Fusion (RRF k=60)"]
+    RRF --> Candidates["📋 Fused Candidate Chunks"]
 ```
 
-### 3️⃣ Fusion & Cross-Encoder Reranking
+### 3️⃣ Cross-Encoder Reranking & Corrective RAG (CRAG) Loop
 ```mermaid
-flowchart LR
-    FAISS & BM25 --> Candidates["Top 2K Candidates"]
-    Candidates --> RRF["🧮 Reciprocal Rank Fusion"]
-    RRF --> CrossEncoder["🎯 Cross-Encoder Reranker"]
-    CrossEncoder --> Context["📋 Top Ranked Context Chunks"]
+flowchart TD
+    Candidates["📋 Fused Candidates"] --> Reranker["🎯 Cross-Encoder (ms-marco-MiniLM-L-6-v2)"]
+    Reranker --> Context["📄 Top Ranked Context"]
+    Context --> RelevanceCheck{"🧠 LLM Relevance Check"}
+    RelevanceCheck -->|"RELEVANT (YES)"| Generator["✍️ Mistral LLM (Grounded Answer)"]
+    RelevanceCheck -->|"NOT RELEVANT (NO)"| RewriteCheck{"Attempts < Max Retries?"}
+    RewriteCheck -->|"Yes"| Rewriter["🔄 LLM Query Rewriter"]
+    Rewriter -->|"New Query"| Candidates
+    RewriteCheck -->|"No"| Fallback["⚠️ Best-Effort Answer"]
 ```
 
-### 4️⃣ MLOps Evaluation & Benchmarking
+### 4️⃣ Ragas Assessment & Evaluation Pipeline
 ```mermaid
 flowchart LR
-    Context["📋 Context Chunks"] --> MatchMatrix["🔍 Hybrid Match Matrix"]
-    MatchMatrix --> IRMetrics["📊 IR Metrics (Hit Rate, MRR, NDCG, Precision, Recall)"]
-    Context --> LLMJudge["🤖 Mistral LLM-as-a-Judge (1-5 Score)"]
+    Dataset["📊 Question + Answer + Contexts"] --> Ragas["📐 Ragas Evaluation Framework"]
+    Ragas --> Faithfulness["🛡️ Faithfulness (Groundedness)"]
+    Ragas --> Relevancy["🎯 Answer Relevancy"]
+    Faithfulness & Relevancy --> Evaluator["🦙 Local Ollama (Phi-3) + HuggingFace Embeddings"]
 ```
 
 ---
 
 ## ✨ Key Features
 
-* 🔀 **Adaptive Tri-Strategy Retrieval**: Automatically routes prompts to **Naive Vector RAG**, **Hybrid BM25+FAISS RAG**, or **GraphRAG Subgraph Traversal** based on query semantics.
-* 🧮 **Reciprocal Rank Fusion (RRF)**: Merges sparse keyword ranks and dense vector similarity ranks using scale-invariant RRF ($1/(60+r)$).
-* 🎯 **Two-Stage Cross-Encoder Reranking**: Uses `ms-marco-MiniLM-L-6-v2` cross-attention to re-score first-stage retrieval candidates for maximum context precision.
-* 📦 **Anonymous Object Instance Isolation**: Supports `TriRAG()` instantiation without name arguments using UUIDs (`anon_<uuid>`), mirroring native Python object behavior.
-* 💾 **MD5 Hash Cache Validation**: Hashes document content to prevent stale disk cache loads and auto-trigger fresh ingestions on file edits.
-* 🧹 **RAM Memory Management**: Provides explicit `.unload()`, `.close()`, `.delete_collection()`, and Python context manager (`with TriRAG() as rag:`) support.
-* ⚡ **FastAPI Microservice Decoupling**: Exposes `/embed`, `/embed_batch`, and `/rerank` REST endpoints for centralized GPU/CPU inference.
-* 📊 **Built-in MLOps Evaluation Suite**: Computes IR metrics (Hit Rate, MRR, NDCG, Precision@K, Recall) and incorporates a 1-5 scale **LLM-as-a-Judge**.
+* 🔀 **Tri-Strategy Concurrent Retrieval**: Queries **Dense Vector Search (FAISS)**, **Lexical Search (BM25)**, and **Knowledge Graph Subgraphs (NetworkX)** simultaneously for high recall.
+* 🧮 **Reciprocal Rank Fusion (RRF)**: Merges disparate score scales into an equitable, scale-invariant ranking using $1 / (60 + \text{rank})$.
+* 🎯 **Two-Stage Cross-Encoder Reranking**: Uses `cross-encoder/ms-marco-MiniLM-L-6-v2` cross-attention to score fine-grained semantic alignment between the query and candidate chunks.
+* 🤖 **Agentic Corrective RAG (CRAG)**: Includes an automated self-correction loop where the LLM grades context relevance; if irrelevant, it rewrites the query and retries up to 3 times before generating the answer.
+* 🕸️ **Knowledge Graph Traversal**: Extracts semantic entities and relationships with `LLMGraphTransformer` and executes $N$-hop ego-graph path expansions.
+* ⚡ **Decoupled FastAPI Model Service**: Standalone microservice for `/embed`, `/embed_batch`, and `/rerank` with client adapters (`RemoteEmbedder`, `RemoteReranker`).
+* 📊 **Integrated Ragas Evaluation**: Built-in evaluation pipeline testing **Faithfulness** and **Answer Relevancy** powered by local Ollama (`phi3:3.8b`) and SentenceTransformers.
 
 ---
 
@@ -79,73 +90,67 @@ flowchart LR
 
 ```text
 📁 TriRAG/
-├── ⚙️ config.yaml                         # Global configuration parameters
-├── 🚀 main.py                             # Clean SDK entry point script
-├── 📜 README.md                           # Project documentation & benchmark report
-├── 📦 requirements.txt                    # Python dependency specifications
+├── 🚀 main.py                             # Application entry point script
+├── 📜 README.md                           # Project documentation & architecture
+├── 📦 requirements.txt                    # Project dependency specifications
 │
-├── 📂 data/                               # Isolated Workspace Storage (Git-Ignored)
-│   ├── 🗂️ collections/                    # Multi-tenant collection folders
-│   ├── 📄 raw/                            # Raw source context text files
-│   └── 📊 eval/                           # Benchmark evaluation dataset JSONs
-│
-├── 📝 notes/                              # Architecture Specs & Refactoring Notes
-│   ├── refactor_pipeline_engine.txt       # Engine class architecture design
-│   └── collection_isolation_memory.txt    # UUID isolation & memory cleanup specs
-│
-├── 📜 scripts/                            # Dataset Build Scripts
-│   └── prepare_hotpotqa.py                # HotpotQA benchmark builder script
+├── 📂 data/                               # Sample input documents
+│   ├── 📄 sample.pdf                      # Comprehensive sample document
+│   ├── 📄 sample_small.pdf                # Compact test PDF document
+│   └── 📄 sample.txt                      # Plain text test document
 │
 └── 🧠 src/                                # TriRAG Core Source Library
-    ├── ⚡ engine.py                        # Unified SDK Engine (UUID isolation & RAM control)
+    ├── ⚡ engine.py                        # Unified TriRAG Pipeline Engine
+    ├── 🤖 llm.py                           # ChatMistralAI (Generation, Relevance & Query Rewriting)
     │
-    ├── 🔌 api/                            # FastAPI REST Microservice
-    │   └── main.py                        # Endpoints (/embed, /embed_batch, /rerank)
+    ├── 🤖 agent/                          # Agentic Retrieval & Reasoning
+    │   └── corrective_rag.py              # Corrective RAG (CRAG) loop with self-reflection
     │
-    ├── 📥 ingestion/                      # Document Loading Module
-    │   └── loader.py                      # PDF and TXT text extractors
+    ├── 📥 loaders/                        # Document Ingestion Loaders
+    │   ├── base.py                        # BaseLoader abstract interface
+    │   ├── pdf_loader.py                  # PyPDF document loader
+    │   └── txt_loader.py                  # UTF-8 text file loader
     │
-    ├── ✂️ chunking/                       # Text Segmentation Module
-    │   └── chunker.py                     # Fixed and Recursive character chunkers
+    ├── ✂️ chunking/                       # Text Chunking Strategies
+    │   ├── base.py                        # BaseChunker abstract interface
+    │   ├── simple_chunker.py              # Fixed-size window text chunker
+    │   └── recursive_chunker.py           # Hierarchical recursive character chunker
     │
     ├── ⚡ embeddings/                      # Vector Embedding Clients
-    │   ├── embedder.py                    # Local SentenceTransformer client
-    │   └── remote_embedder.py             # Remote FastAPI client with local fallback
+    │   ├── base.py                        # BaseEmbedder abstract interface
+    │   ├── embedder.py                    # Local SentenceTransformer (BAAI/bge-small-en-v1.5)
+    │   └── remote_embedder.py             # Remote FastAPI HTTP embedding client
     │
-    ├── 💾 storage/                        # Triple Index Storage Engines
-    │   ├── vector_store.py                # FAISS Vector Index (Max Inner Product)
-    │   ├── bm25_store.py                  # BM25Okapi Lexical Index
-    │   └── graph_store.py                 # NetworkX DiGraph Serialization
+    ├── 💾 vector_store/                   # Vector Storage Layer
+    │   ├── base.py                        # BaseVectorStore abstract interface
+    │   └── faiss_store.py                 # FAISS IndexFlatL2 vector database
     │
     ├── 🕸️ graph/                          # Knowledge Graph Pipeline
-    │   ├── extractor.py                   # Rate-limit-safe graph document extractor
-    │   ├── builder.py                     # Entity node & relationship edge builder
-    │   └── traversal.py                   # Seed node matching & N-hop ego-graph traversal
+    │   ├── extractor.py                   # LLMGraphTransformer entity & relation extractor
+    │   ├── builder.py                     # NetworkX DiGraph builder
+    │   └── traversal.py                   # Entity seed matching & ego-graph traversal
     │
-    ├── 🔍 retrieval/                      # Multi-Strategy Retrieval Engines
-    │   ├── base.py                        # Abstract BaseRetriever interface
-    │   ├── naive_rag.py                   # Dense vector similarity retriever
-    │   ├── bm25_retriever.py              # Lexical BM25 keyword retriever
-    │   ├── hybrid_rag.py                  # Reciprocal Rank Fusion (RRF) retriever
-    │   └── graph_rag.py                   # Subgraph relationship retriever
+    ├── 🔍 retriever/                      # Retrieval Implementations
+    │   ├── base.py                        # BaseRetriever abstract interface
+    │   ├── naive_retriever.py             # Dense FAISS vector similarity retriever
+    │   ├── bm25_retriever.py              # Sparse BM25 lexical keyword retriever
+    │   └── graph_retriever.py             # Knowledge Graph subgraph retriever
     │
-    ├── 🎯 rerankers/                      # Cross-Encoder Attention Models
-    │   ├── cross_encoder.py               # Local CrossEncoder model
+    ├── 🧮 fusion/                         # Rank Fusion Strategies
+    │   └── rrf.py                         # Reciprocal Rank Fusion (RRF) algorithm
+    │
+    ├── 🎯 rerankers/                      # Cross-Encoder Precision Rerankers
+    │   ├── reranker.py                    # Local CrossEncoder (ms-marco-MiniLM-L-6-v2)
     │   └── remote_reranker.py             # Remote FastAPI HTTP reranker client
     │
-    ├── 🧠 routing/                        # Intelligent Query Classifier
-    │   └── router.py                      # Semantic prompt classifier & engine dispatcher
+    ├── 🔌 api/                            # FastAPI Microservice Service
+    │   └── main.py                        # REST endpoints (/embed, /embed_batch, /rerank)
     │
-    ├── 📊 evaluation/                     # MLOps Evaluation Suite
-    │   ├── evaluator.py                   # Benchmark loop & report generator
-    │   ├── metrics.py                     # Hit Rate, MRR, NDCG, Precision, Recall metrics
-    │   └── llm_judge.py                   # Mistral 1-5 scale LLM-as-a-Judge
+    ├── 📊 evaluation/                     # RAG Assessment & Benchmarking
+    │   └── ragas_evaluator.py             # Ragas pipeline (Faithfulness, Answer Relevancy)
     │
-    ├── 🤖 llm/                            # LLM Integration Client
-    │   └── llm_client.py                  # ChatMistralAI integration
-    │
-    └── 🛠️ utils/                          # Logger & Utilities
-        └── logging.py                     # Standardized logger configuration
+    └── 🛠️ utils/                          # Common Utilities
+        └── logging.py                     # Centralized logging configuration
 ```
 
 ---
@@ -154,7 +159,7 @@ flowchart LR
 
 ### 1. Clone Repository & Install Dependencies
 ```bash
-git clone https://github.com/your-username/TriRAG.git
+git clone https://github.com/niravrupapara/TriRAG.git
 cd TriRAG
 pip install -r requirements.txt
 ```
@@ -167,99 +172,82 @@ MISTRAL_API_KEY=your_mistral_api_key_here
 
 ---
 
-## 🐍 Python SDK Usage
+## 🐍 Quick Start & SDK Usage
 
-### Basic Usage (Anonymous UUID Instance)
-```python
-from src.engine import TriRAG
-
-# 1. Initialize anonymous instance (auto-generates temp storage: anon_<uuid>)
-rag = TriRAG()
-
-# 2. Ingest document (auto-calculates MD5 hash and builds indexes)
-rag.load_or_ingest("data/raw/sample_test.txt")
-
-# 3. Retrieval + LLM Text Answer Synthesis (Mistral AI)
-strategy, answer, results = rag.query_and_generate("How does backpropagation relate to gradient descent?")
-
-print(f"Strategy Selected : {strategy}")
-print(f"AI Synthesized Answer:\n{answer}")
-
-# 4. Context Chunks Retrieval Only (Without LLM generation)
-strategy, results = rag.query("How does backpropagation relate to gradient descent?")
-
-# 5. Free RAM memory
-rag.unload()
+### Running the End-to-End Pipeline
+Run the main script directly on the sample document:
+```bash
+python main.py
 ```
 
-### Named Persistent Collection Mode
+### Programmatic Usage
 ```python
-# Storage saved permanently in data/collections/physics_kb/
-rag = TriRAG(collection_name="physics_kb")
-rag.load_or_ingest("data/raw/physics_textbook.txt")
-```
+from dotenv import load_dotenv
+from src.engine import Engine
 
-### Context Manager Mode (Auto RAM Cleanup)
-```python
-with TriRAG() as rag:
-    rag.load_or_ingest("data/raw/sample_test.txt")
-    strategy, results = rag.query("What is gradient descent?")
-# RAM memory is automatically freed upon exiting the with block!
+load_dotenv()
+
+# 1. Initialize Engine with your PDF document
+engine = Engine("data/sample_small.pdf")
+
+# 2. Query with Agentic Corrective RAG
+question = "Why is cross-encoder reranking performed after initial retrieval?"
+answer, chunks = engine.query(question)
+
+print(f"Question: {question}\n")
+print(f"Answer:\n{answer}")
 ```
 
 ---
 
-## ⚡ FastAPI Microservice
+## ⚡ FastAPI Model Microservice
 
-To run embedding and reranking models over a centralized microservice REST API:
+You can offload embedding generation and cross-encoder reranking to a centralized, GPU/CPU-optimized FastAPI server:
 
-### 1. Launch FastAPI Server
+### 1. Start the Server
 ```bash
 uvicorn src.api.main:app --reload --port 8000
 ```
 
-### 2. Available Endpoints
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/health` | Server status and model load verification |
-| `POST` | `/embed` | Generates embedding vector for a single text |
-| `POST` | `/embed_batch` | Generates embedding vectors for a batch of texts |
-| `POST` | `/rerank` | Re-scores candidate chunks using Cross-Encoder attention |
+### 2. API Endpoints
+| Method | Endpoint | Request Body | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` | _None_ | Server health check and model loading status |
+| `POST` | `/embed` | `{"text": "..."}` | Returns 384-dim normalized embedding vector |
+| `POST` | `/embed_batch` | `{"texts": ["...", "..."]}` | Generates embeddings for multiple documents |
+| `POST` | `/rerank` | `{"question": "...", "candidates": [...], "top_k": 3}` | Re-scores candidates using Cross-Encoder attention |
 
 ---
 
-## 📊 Evaluation & Benchmarking
+## 🤖 Agentic Corrective RAG (CRAG) Workflow
 
-Run the evaluation suite across **Naive**, **Hybrid**, and **Graph** strategies:
+Standard RAG pipelines blindly generate answers from whatever context the retriever returns. **TriRAG** introduces an agentic self-reflection loop:
 
-### 🌐 Benchmark Dataset: HotpotQA Subset
-Evaluated on a lightweight 10-question sample from the **HotpotQA** multi-hop dataset (`hotpotqa/hotpot_qa`), designed for multi-paragraph fact retrieval testing:
+1. **Multi-Retriever Retrieval**: Chunks are retrieved across **FAISS**, **BM25**, and **Knowledge Graph**.
+2. **RRF & Reranking**: Candidates are fused via **RRF** and sorted with the **Cross-Encoder**.
+3. **Relevance Grading**: `llm.check_relevance(query, context)` checks if the context contains sufficient facts to answer the question (`YES` / `NO`).
+4. **Autonomous Query Rewriting**: If graded `NO`, `llm.rewrite_query(query)` formulates an optimized query and triggers re-retrieval (up to 3 retries).
+5. **Grounded Generation**: The LLM synthesizes an answer strictly from verified context.
 
+---
+
+## 📊 Ragas Evaluation & Benchmarking
+
+TriRAG includes a built-in evaluation module using the **Ragas** framework to measure retrieval and generation quality:
+
+### Metrics Evaluated:
+* **Faithfulness**: Measures whether the generated answer is grounded in and faithful to the retrieved context (hallucination detection).
+* **Answer Relevancy**: Evaluates how directly the generated answer addresses the question.
+
+### Running Evaluation:
+Ensure you have [Ollama](https://ollama.ai/) installed with the `phi3:3.8b` model running:
 ```bash
-# 1. Fetch lightweight 10-question sample dataset from HuggingFace
-python scripts/prepare_hotpotqa.py
+ollama run phi3:3.8b
 ```
 
-```python
-from src.engine import TriRAG
-
-# 2. Run evaluation benchmark
-rag = TriRAG(collection_name="benchmark_run")
-rag.load_or_ingest("data/raw/hotpotqa_subset.txt")
-summary = rag.evaluate()
-```
-
-### Benchmark Sample Results (HotpotQA Dataset)
-```text
-=================================================================
-                        EVALUATION REPORT                        
-=================================================================
-Strategy       Hit Rate        MRR       NDCG  Precision     Recall    LLM Score
------------------------------------------------------------------
-NAIVE            0.8000     0.7500     0.7820     0.4000     0.7000       4.1000
-HYBRID           0.9000     0.8833     0.8910     0.5500     0.8500       4.7000
-GRAPH            0.8500     0.8000     0.8240     0.4800     0.7800       4.4000
-=================================================================
+Run the standalone evaluator:
+```bash
+python -m src.evaluation.ragas_evaluator
 ```
 
 ---
@@ -269,7 +257,7 @@ GRAPH            0.8500     0.8000     0.8240     0.4800     0.7800       4.4000
 ### 👨‍💻 Developed By
 * **Author**: Nirav Rupapara
 * **Email**: [niravrupapara60@gmail.com](mailto:niravrupapara60@gmail.com)
-* **Project Repository**: [TriRAG](https://github.com/niravrupapara/TriRAG)
+* **Project Repository**: [TriRAG GitHub](https://github.com/niravrupapara/TriRAG)
 
 ---
 
